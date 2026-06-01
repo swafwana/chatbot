@@ -75,8 +75,9 @@
       <div class="topbar-sub">Private entries · synced to your profile</div>
     </div>
     <div class="topbar-actions">
-      <a href="{{ url_for('page_dashboard') }}?user_id={{ user_id | urlencode }}" class="btn btn-ghost">Overview</a>
-      <button type="button" class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+    <a href="{{ url_for('page_dashboard') }}?user_id={{ user_id | urlencode }}" class="btn btn-ghost">Overview</a>
+    <button type="button" id="newEntryBtn" class="btn btn-ghost" onclick="newEntry()" style="display:none;">New Entry</button>
+    <button type="button" class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
     </div>
   </div>
 
@@ -97,8 +98,7 @@
           <div class="journal-date" id="journalDate"></div>
           <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px;">
           <div class="journal-prompt" id="journalPrompt">"What is one thing that brought you a moment of peace today, however small?"</div>
-          <button onclick="cyclePrompt()" style="background:none; border:none; cursor:pointer; font-size:16px; color:var(--ink-soft); padding:4px; flex-shrink:0;" title="New prompt">↻</button>
-          </div>          
+          <button id="cycleBtn" onclick="cyclePrompt()" style="background:none; border:none; cursor:pointer; font-size:16px; color:var(--ink-soft); padding:4px; flex-shrink:0;" title="New prompt">↻</button>          </div>          
           <textarea class="journal-textarea" id="journalText" placeholder="Begin writing... this space is just for you." oninput="updateWordCount()"></textarea>
           <div class="journal-footer">
             <div class="word-count" id="wordCount">0 words</div>

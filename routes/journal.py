@@ -16,6 +16,7 @@ async def create_entry(payload: JournalCreate, db: Session = Depends(get_db)):
         mood_selected=payload.mood_selected,
         mood_note=payload.mood_note,
         tags=payload.tags,
+        prompt=payload.prompt,
     )
     db.add(entry)
     db.commit()

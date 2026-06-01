@@ -351,6 +351,8 @@ setPrompt("Neutral");
   apiJson("/api/journal/entry/" + entryId)
     .then(function(entry) {
       viewingEntry = true;
+      document.getElementById("newEntryBtn").style.display = "inline-block";
+      document.getElementById("cycleBtn").style.display = "none";
       ta.value = entry.content || "";
       window.updateWordCount();
       var mood = entry.mood || "Neutral";
@@ -365,6 +367,18 @@ setPrompt("Neutral");
     .catch(function() {
       alert("Could not open entry");
     });
+};
+window.newEntry = function() {
+  viewingEntry = false;
+  ta.value = "";
+  window.updateWordCount();
+  document.querySelectorAll(".mood-scale-item").forEach(function(i) { i.classList.remove("selected"); });
+  document.querySelector('.mood-scale-item[data-mood="Neutral"]').classList.add("selected");
+  document.querySelectorAll(".tag.active").forEach(function(t) { t.classList.remove("active"); });
+  promptIndex = 0;
+  setPrompt("Neutral");
+  document.getElementById("newEntryBtn").style.display = "none";
+  document.getElementById("cycleBtn").style.display = "inline-block";
 };
 
 
