@@ -6,10 +6,11 @@ from sqlalchemy.sql import func
 class Message(Base):
     __tablename__ = "messages"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, default="default", index=True)
     role = Column(String)
     content = Column(Text)
+    crisis_flag = Column(Integer, default=0)
     timestamp = Column(DateTime, default=datetime.utcnow)
-
 class Mood(Base):
     __tablename__ = "moods"
     id = Column(Integer, primary_key=True, index=True)
@@ -37,9 +38,13 @@ class JournalEntry(Base):
 class Goal(Base):
     __tablename__ = "goals"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, default="default", index=True)  # add this
     title = Column(String)
     description = Column(Text)
-    goal_type = Column(String)   # "wellbeing", "life", "micro"
-    status = Column(String, default="active")  # "active", "completed", "abandoned"
+    goal_type = Column(String)
+    status = Column(String, default="active")
     created_at = Column(DateTime, default=datetime.utcnow)
-    last_checkin = Column(DateTime, nullable=True)    
+    last_checkin = Column(DateTime, nullable=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    prompt = Column(String, nullable=True) 
