@@ -9,6 +9,7 @@ class ChatInput(BaseModel):
     user_id: str = Field(default="default", min_length=1)
     message: str = Field(min_length=1)
     include_context: bool = False  # your addition ✅
+    session_id: Optional[str] = None  
 
 class ChatOutput(BaseModel):
     response: str
@@ -39,3 +40,6 @@ class GoalCheckinUpdate(BaseModel):
     status: GoalStatus = "active"
     progress_note: Optional[str] = None
     last_checkin: datetime = Field(default_factory=datetime.utcnow)
+
+class SessionCreate(BaseModel):
+    user_id: str = Field(default="default", min_length=1)

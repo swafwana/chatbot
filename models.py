@@ -11,6 +11,7 @@ class Message(Base):
     content = Column(Text)
     crisis_flag = Column(Integer, default=0)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    session_id = Column(String, nullable=True, index=True)
 class Mood(Base):
     __tablename__ = "moods"
     id = Column(Integer, primary_key=True, index=True)

@@ -85,7 +85,9 @@
   function initChat() {
     var messagesEl = document.getElementById("chatMessages");
     var input = document.getElementById("chatInput");
+   
     if (!messagesEl || !input) return;
+    var currentSessionId = null;
 
     function appendUser(text) {
       var wrap = document.createElement("div");
@@ -145,7 +147,7 @@
       apiJson("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, message: text }),
+        body: JSON.stringify({ user_id: uid, message: text,session_id: currentSessionId }),
       })
         .then(function (data) {
           hideTyping();
@@ -188,22 +190,71 @@
       input.value = chip.textContent.trim();
       window.sendMessage();
     };
-
-    window.newChat = function () {
-      messagesEl.innerHTML =
-        '<div class="msg bot">' +
-        '<div class="msg-avatar">🌿</div><div><div class="msg-bubble">' +
-        "Hello — I'm glad you're here. How are you feeling right now? Share as much or as little as you like." +
-        '<div class="mood-selector-msg">' +
-        '<div class="mood-option" onclick="selectChatMood(\'peaceful\')"><span>😌</span>Peaceful</div>' +
-        '<div class="mood-option" onclick="selectChatMood(\'anxious\')"><span>😰</span>Anxious</div>' +
-        '<div class="mood-option" onclick="selectChatMood(\'sad\')"><span>😢</span>Sad</div>' +
-        '<div class="mood-option" onclick="selectChatMood(\'confused\')"><span>😕</span>Confused</div>' +
-        '<div class="mood-option" onclick="selectChatMood(\'other\')"><span>💬</span>Other</div>' +
-        "</div></div><div class=\"msg-time\">" +
-        formatTime() +
-        "</div></div></div>";
-    };
+    function loadHistory(sessionId) {
+  var url = "/api/chat/history?user_id=" + encodeURIComponent(uid);
+  if (sessionId) url += "&session_id=" + encodeURIComponent(sessionId);
+  apiJson(url)
+    .then(function(messages) {
+      if (!messages.length) return;
+      messagesEl.innerHTML = "";
+      messages.forEach(function(m) {
+        var html = escapeHtml(m.content).replace(/\n/g, "<br>");
+        if (m.role === "user") appendUser(m.content);
+        else appendBot(html, false);
+      });
+    })
+    .catch(function() {});
+}
+function loadSidebar() {
+  var sidebar = document.getElementById("chatHistoryList");
+  if (!sidebar) return;
+  apiJson("/api/chat/sessions?user_id=" + encodeURIComponent(uid))
+    .then(function(sessions) {
+      sidebar.innerHTML = "";
+      sessions.forEach(function(s) {
+        var d = new Date(s.timestamp);
+        var dateStr = d.toLocaleDateString("en-US", {month: "short", day: "numeric"});
+        var div = document.createElement("div");
+        div.className = "chat-session" + (s.session_id === currentSessionId ? " active" : "");
+        div.innerHTML = '<div class="session-topic">' + escapeHtml(s.preview) + '</div><div class="session-meta">' + dateStr + '</div>';
+        div.onclick = function() {
+          currentSessionId = s.session_id;
+          loadHistory(s.session_id);
+          sidebar.querySelectorAll(".chat-session").forEach(function(el) { el.classList.remove("active"); });
+          div.classList.add("active");
+        };
+        sidebar.appendChild(div);
+      });
+    })
+    .catch(function() {});
+}
+window.newChat = function() {
+  apiJson("/api/chat/session", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({user_id: uid})
+  }).then(function(data) {
+    currentSessionId = data.session_id;
+    messagesEl.innerHTML = "";
+    loadSidebar();
+    // show welcome message
+    var welcome = document.createElement("div");
+    welcome.className = "msg bot";
+    welcome.innerHTML = '<div class="msg-avatar">🌿</div><div><div class="msg-bubble">Hello — I\'m glad you\'re here. How are you feeling right now?<div class="mood-selector-msg"><div class="mood-option" onclick="selectChatMood(\'peaceful\')"><span>😌</span>Peaceful</div><div class="mood-option" onclick="selectChatMood(\'anxious\')"><span>😰</span>Anxious</div><div class="mood-option" onclick="selectChatMood(\'sad\')"><span>😢</span>Sad</div><div class="mood-option" onclick="selectChatMood(\'confused\')"><span>😕</span>Confused</div><div class="mood-option" onclick="selectChatMood(\'other\')"><span>💬</span>Other</div></div></div></div>';
+    messagesEl.appendChild(welcome);
+  });
+};
+apiJson("/api/chat/sessions?user_id=" + encodeURIComponent(uid))
+  .then(function(sessions) {
+    loadSidebar();
+    if (sessions.length) {
+      currentSessionId = sessions[0].session_id;
+      loadHistory(currentSessionId);
+    } else {
+      window.newChat();
+    }
+  });
+  
   }
 
   function initJournal() {
