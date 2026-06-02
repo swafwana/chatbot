@@ -8,6 +8,7 @@ from services.ai_client import generate_chat_reply
 from services.context import build_user_context
 from services.crisis import SAFE_RESPONSE, keyword_crisis_detected
 from uuid import uuid4
+from services.history import build_chat_history
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -18,20 +19,31 @@ def chat(data: ChatInput, db: Session = Depends(get_db)):
     db.commit()
 
     if keyword_crisis_detected(data.message):
-        db.add(
-            models.Message(
+        db.add(models.Message(
                 user_id=data.user_id,
                 role="bot",
                 content=SAFE_RESPONSE,
                 crisis_flag=True,
                 session_id=data.session_id 
             )
+            
         )
+
         db.commit()
         return ChatOutput(response=SAFE_RESPONSE, crisis=True)
+    history = build_chat_history(
+    db,
+    data.user_id,
+    data.session_id
+)
 
     context = build_user_context(db, data.user_id)
-    reply = generate_chat_reply(data.message, context)
+    print(history)
+    reply = generate_chat_reply(
+    data.message,
+    context,
+    history
+)
 
     db.add(models.Message(user_id=data.user_id, role="bot", content=reply, session_id=data.session_id))
     db.commit()

@@ -22,7 +22,7 @@ def _fallback_reply(user_message: str) -> str:
     )
 
 
-def generate_chat_reply(user_message: str, context: str) -> str:
+def generate_chat_reply(user_message: str, context: str,  history: list) -> str:
     provider = os.getenv("MODEL_PROVIDER", "groq").lower()
     model_name = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
 
@@ -36,16 +36,38 @@ def generate_chat_reply(user_message: str, context: str) -> str:
         from groq import Groq
 
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        messages = [
+        {
+        "role": "system",
+        "content": SYSTEM_PROMPT
+        }
+        ]
+
+        messages.append(
+            {
+                "role": "system",
+                "content": f"User context:\n{context}"
+            }
+        )
+
+
+        messages.extend(history)
+
+        messages.append(
+            {
+                "role": "user",
+                "content": user_message
+            }
+        )
         result = client.chat.completions.create(
             model=model_name,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"{context}\n\n{user_message}"},
-            ],
+            messages=messages
         )
+                
         return result.choices[0].message.content
 
-    # Gemini placeholder for phase-based rollout; can be wired with google-genai package later.
+
+ # Gemini placeholder for phase-based rollout; can be wired with google-genai package later.
     if provider == "gemini" and os.getenv("GEMINI_API_KEY"):
         return _fallback_reply(prompt)
 
