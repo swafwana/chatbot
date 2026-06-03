@@ -43,26 +43,27 @@ def generate_chat_reply(user_message: str, context: str,  history: list) -> str:
         }
         ]
 
-        messages.append(
-            {
+        
+        if context.strip():
+            messages.append({
                 "role": "system",
                 "content": f"User context:\n{context}"
-            }
-        )
-
+            })
+        
 
         messages.extend(history)
 
-        messages.append(
-            {
-                "role": "user",
-                "content": user_message
-            }
-        )
+        messages.append({
+        "role": "user",
+        "content": user_message
+        })
+
         result = client.chat.completions.create(
-            model=model_name,
-            messages=messages
-        )
+                model=model_name,
+                messages=messages
+            )
+
+       
                 
         return result.choices[0].message.content
 
