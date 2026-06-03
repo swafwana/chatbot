@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date
+from datetime import datetime, date
 from database import Base
 from sqlalchemy.sql import func
 
@@ -14,13 +14,15 @@ class Message(Base):
     session_id = Column(String, nullable=True, index=True)
 class Mood(Base):
     __tablename__ = "moods"
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, index=True)
 
     mood = Column(String)
-    score = Column(Integer, default=3)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    note = Column(Text, nullable=True)
 
+    date = Column(Date, default=date.today)
+    timestamp = Column(DateTime, default=datetime.utcnow)
 class JournalEntry(Base):
     __tablename__ = "journal_entries"
 

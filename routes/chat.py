@@ -37,8 +37,7 @@ def chat(data: ChatInput, db: Session = Depends(get_db)):
 
     # 4. build context
     context = build_user_context(db, data.user_id, user_message=data.message)
-    print(history)
-
+   
     # 5. generate reply
     reply = generate_chat_reply(data.message, context, history)
 

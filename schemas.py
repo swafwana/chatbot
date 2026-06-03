@@ -4,6 +4,16 @@ from pydantic import BaseModel, Field
 
 GoalType = Literal["wellbeing", "life", "micro"]
 GoalStatus = Literal["active", "completed", "abandoned"]
+MoodType = Literal[
+    "happy",
+    "calm",
+    "neutral",
+    "anxious",
+    "sad",
+    "angry",
+    "stressed",
+    "excited"
+]
 
 class ChatInput(BaseModel):
     user_id: str = Field(default="default", min_length=1)
@@ -17,10 +27,8 @@ class ChatOutput(BaseModel):
 
 class MoodCreate(BaseModel):
     user_id: str = Field(default="default", min_length=1)
-    mood: str = Field(min_length=1)
-    score: int = Field(default=3, ge=1, le=5)  # your addition ✅
+    mood: MoodType
     note: Optional[str] = None
-
 class JournalCreate(BaseModel):
     user_id: str = Field(default="default", min_length=1)
     title: Optional[str] = None
