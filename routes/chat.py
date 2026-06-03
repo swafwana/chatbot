@@ -15,40 +15,38 @@ router = APIRouter(prefix="/api", tags=["chat"])
 
 @router.post("/chat", response_model=ChatOutput)
 def chat(data: ChatInput, db: Session = Depends(get_db)):
-    db.add(models.Message(user_id=data.user_id, role="user", content=data.message,session_id=data.session_id))
+
+    # 1. build history first
+    history = build_chat_history(db, data.user_id, data.session_id)
+
+    # 2. save user message
+    db.add(models.Message(user_id=data.user_id, role="user", content=data.message, session_id=data.session_id))
     db.commit()
 
+    # 3. crisis check
     if keyword_crisis_detected(data.message):
         db.add(models.Message(
-                user_id=data.user_id,
-                role="bot",
-                content=SAFE_RESPONSE,
-                crisis_flag=True,
-                session_id=data.session_id 
-            )
-            
-        )
-
+            user_id=data.user_id,
+            role="bot",
+            content=SAFE_RESPONSE,
+            crisis_flag=True,
+            session_id=data.session_id
+        ))
         db.commit()
         return ChatOutput(response=SAFE_RESPONSE, crisis=True)
-    history = build_chat_history(
-    db,
-    data.user_id,
-    data.session_id
-)
 
-    context = context = build_user_context(db, data.user_id, user_message=data.message)
+    # 4. build context
+    context = build_user_context(db, data.user_id, user_message=data.message)
     print(history)
-    reply = generate_chat_reply(
-    data.message,
-    context,
-    history
-)
 
+    # 5. generate reply
+    reply = generate_chat_reply(data.message, context, history)
+
+    # 6. save bot reply
     db.add(models.Message(user_id=data.user_id, role="bot", content=reply, session_id=data.session_id))
     db.commit()
-    return ChatOutput(response=reply, crisis=False)
 
+    return ChatOutput(response=reply, crisis=False)
 @router.post("/chat/session")
 def create_session(data: SessionCreate, db: Session = Depends(get_db)):
     return {"session_id": str(uuid4())}
