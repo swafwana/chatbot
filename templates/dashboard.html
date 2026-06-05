@@ -139,15 +139,33 @@
       </div>
       <div class="mood-check">
         <p>Today's mood</p>
-        <div class="mood-emojis">
-          <button type="button" class="mood-btn" data-emo-mood="select" title="Awful">😞</button>
-          <button type="button" class="mood-btn" data-emo-mood="select" title="Bad">😔</button>
-          <button type="button" class="mood-btn selected" data-emo-mood="select" title="Okay">😐</button>
-          <button type="button" class="mood-btn" data-emo-mood="select" title="Good">🙂</button>
-          <button type="button" class="mood-btn" data-emo-mood="select" title="Great">😊</button>
-        </div>
+       <div class="mood-emojis">
+        <button type="button" class="mood-btn" title="happy">😊</button>
+        <button type="button" class="mood-btn" title="calm">😌</button>
+        <button type="button" class="mood-btn" title="neutral">😐</button>
+        <button type="button" class="mood-btn" title="anxious">😰</button>
+        <button type="button" class="mood-btn" title="sad">😢</button>
+        <button type="button" class="mood-btn" title="angry">😠</button>
+        <button type="button" class="mood-btn" title="stressed">😤</button>
+        <button type="button" class="mood-btn" title="excited">🤩</button>
+      </div>
         <div id="dashboardMoodSaved"></div>
       </div>
+    </div>
+
+    <div id="moodReminderBanner" style="display:none; align-items:center;
+     justify-content:space-between; background:var(--blush-pale);
+     border:1px solid rgba(232,165,152,0.4); border-radius:var(--radius-sm);
+     padding:14px 20px; margin-bottom:20px;">
+    <div style="font-size:13px; color:var(--ink-mid);">
+      <strong style="color:var(--ink);">Mood check-in</strong> —
+      <span class="reminder-text"></span>
+    </div>
+    <button type="button" class="btn btn-ghost"
+            style="font-size:12px; padding:6px 14px;"
+            onclick="document.querySelector('.mood-emojis').scrollIntoView({behavior:'smooth'})">
+      Log Mood
+    </button>
     </div>
 
     <div class="stats-row">

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime,date
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
@@ -29,6 +29,7 @@ class MoodCreate(BaseModel):
     user_id: str = Field(default="default", min_length=1)
     mood: MoodType
     note: Optional[str] = None
+    date: Optional[date] = None 
 class JournalCreate(BaseModel):
     user_id: str = Field(default="default", min_length=1)
     title: Optional[str] = None

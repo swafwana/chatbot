@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 import models
-from database import Base, engine, run_sqlite_migrations
+from database import Base, engine
 from routes.chat import router as chat_router
 from routes.goals import router as goals_router
 from routes.journal import router as journal_router
@@ -12,7 +12,7 @@ from routes.mood import router as mood_router
 
 app = FastAPI(title="Mental Health Chatbot API", version="1.0.0")
 Base.metadata.create_all(bind=engine)
-run_sqlite_migrations(engine)
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")

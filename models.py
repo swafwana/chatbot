@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Date
-from datetime import datetime, date
+from datetime import datetime, date as date_type
 from database import Base
 from sqlalchemy.sql import func
 
@@ -21,7 +21,7 @@ class Mood(Base):
     mood = Column(String)
     note = Column(Text, nullable=True)
 
-    date = Column(Date, default=date.today)
+    date = Column(Date, default=date_type.today)
     timestamp = Column(DateTime, default=datetime.utcnow)
 class JournalEntry(Base):
     __tablename__ = "journal_entries"
