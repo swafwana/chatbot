@@ -1,0 +1,238 @@
+{% extends "layout.html" %}
+{% block title %}EMO — Goals{% endblock %}
+{% block head_extra %}
+<style>
+  .goals-body { flex: 1; overflow-y: auto; padding: 32px; }
+
+  /* ── GOAL CARDS ── */
+  .goals-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+  .goal-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    display: flex; align-items: flex-start; gap: 20px;
+    transition: box-shadow 0.2s;
+  }
+  .goal-card:hover { box-shadow: var(--shadow); }
+  .goal-card-left { flex: 1; }
+  .goal-card-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  }
+  .goal-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .goal-type-badge {
+    font-size: 10px; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-health       { background: var(--sage-pale);     color: var(--sage-dark); }
+  .badge-mind         { background: var(--lavender-pale); color: var(--lavender); }
+  .badge-relationships{ background: var(--blush-pale);    color: var(--blush); }
+  .badge-work         { background: var(--amber-pale);    color: var(--amber); }
+
+  .goal-why {
+    font-size: 13px; color: var(--ink-soft); margin-bottom: 10px;
+    font-style: italic; line-height: 1.5;
+  }
+  .goal-meta {
+    display: flex; align-items: center; gap: 16px;
+    font-size: 12px; color: var(--ink-soft);
+  }
+  .goal-state {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600;
+  }
+  .state-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .state-in_progress  { color: var(--sage); }
+  .state-struggling   { color: var(--amber); }
+  .state-paused       { color: var(--ink-soft); }
+  .state-completed    { color: var(--lavender); }
+  .dot-in_progress    { background: var(--sage); }
+  .dot-struggling     { background: var(--amber); }
+  .dot-paused         { background: var(--ink-soft); }
+  .dot-completed      { background: var(--lavender); }
+
+  .goal-card-actions {
+    display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+  }
+  .goal-action-btn {
+    padding: 7px 14px; border-radius: 50px; font-size: 12px;
+    font-weight: 500; cursor: pointer; transition: all 0.2s;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--ink-mid); white-space: nowrap;
+  }
+  .goal-action-btn:hover { background: var(--sage-pale); border-color: var(--sage); color: var(--sage-dark); }
+  .goal-action-btn.danger:hover { background: var(--blush-pale); border-color: var(--blush); color: var(--blush); }
+
+  /* ── GOAL LIMIT BAR ── */
+  .goal-limit-bar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px;
+  }
+  .goal-limit-dots { display: flex; gap: 6px; }
+  .goal-limit-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border); transition: background 0.3s;
+  }
+  .goal-limit-dot.filled { background: var(--sage); }
+  .goal-limit-text { font-size: 13px; color: var(--ink-soft); }
+
+  /* ── COMPLETED SECTION ── */
+  .completed-toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 500; color: var(--ink-mid);
+    cursor: pointer; margin-bottom: 12px; background: none;
+    border: none; padding: 0;
+  }
+  .completed-toggle:hover { color: var(--ink); }
+  .toggle-arrow { transition: transform 0.2s; font-size: 12px; }
+  .toggle-arrow.open { transform: rotate(90deg); }
+  .completed-list { display: flex; flex-direction: column; gap: 12px; }
+  .completed-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px;
+    opacity: 0.7;
+  }
+  .completed-card-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+  .completed-title { font-size: 14px; font-weight: 500; color: var(--ink-mid); }
+  .completed-note { font-size: 12px; color: var(--ink-soft); font-style: italic; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(28,43,36,0.4);
+    z-index: 100; display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: var(--radius);
+    padding: 32px; width: 100%; max-width: 480px;
+    animation: scaleIn 0.2s ease;
+  }
+  @keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+  .modal-title {
+    font-family: var(--serif); font-size: 22px;
+    color: var(--ink); margin-bottom: 4px;
+  }
+  .modal-sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 24px; }
+  .form-field { margin-bottom: 18px; }
+  .form-label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--ink-mid); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .form-input, .form-textarea {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: var(--sans); font-size: 14px; color: var(--ink);
+    background: var(--cream); outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-textarea:focus { border-color: var(--sage); }
+  .form-textarea { min-height: 80px; resize: vertical; line-height: 1.6; }
+  .type-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+  .type-option {
+    padding: 8px 16px; border-radius: 50px;
+    border: 1px solid var(--border); font-size: 13px;
+    font-weight: 500; cursor: pointer; color: var(--ink-mid);
+    transition: all 0.2s; background: transparent;
+  }
+  .type-option:hover { border-color: var(--sage); color: var(--sage-dark); }
+  .type-option.selected { background: var(--sage); color: white; border-color: var(--sage); }
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--ink-soft);
+  }
+  .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 {
+    font-family: var(--serif); font-size: 20px;
+    color: var(--ink); margin-bottom: 8px;
+  }
+  .empty-state p { font-size: 14px; line-height: 1.6; max-width: 300px; margin: 0 auto 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <div class="topbar-title">My Goals</div>
+    <div class="topbar-sub" id="goalCountSub">Loading...</div>
+  </div>
+  <div class="topbar-actions">
+    <button type="button" class="btn btn-primary" onclick="openAddGoal()">+ Add Goal</button>
+  </div>
+</div>
+
+<div class="goals-body">
+
+  <!-- Goal limit indicator -->
+  <div class="goal-limit-bar">
+    <div class="goal-limit-dots" id="goalLimitDots">
+      <div class="goal-limit-dot"></div>
+      <div class="goal-limit-dot"></div>
+      <div class="goal-limit-dot"></div>
+      <div class="goal-limit-dot"></div>
+      <div class="goal-limit-dot"></div>
+    </div>
+    <div class="goal-limit-text" id="goalLimitText">0 of 5 active goals</div>
+  </div>
+
+  <!-- Active goals -->
+  <div class="goals-grid" id="activeGoalsList"></div>
+
+  <!-- Completed goals -->
+  <button type="button" class="completed-toggle" onclick="toggleCompleted()">
+    <span class="toggle-arrow" id="completedArrow">▶</span>
+    Completed Goals
+    <span id="completedCount" style="font-size:12px; color:var(--ink-soft);">(0)</span>
+  </button>
+  <div class="completed-list" id="completedGoalsList" style="display:none;"></div>
+
+</div>
+
+<!-- Add Goal Modal -->
+<div class="modal-overlay" id="addGoalModal">
+  <div class="modal">
+    <div class="modal-title">New Goal</div>
+    <div class="modal-sub">Set an intention, not a deadline.</div>
+
+    <div class="form-field">
+      <label class="form-label">What is your goal?</label>
+      <input type="text" class="form-input" id="goalTitle" placeholder="e.g. Sleep before midnight every night" />
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Why does this matter to you?</label>
+      <textarea class="form-textarea" id="goalWhy" placeholder="e.g. I wake up exhausted and it affects my whole day"></textarea>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Category</label>
+      <div class="type-selector">
+        <button type="button" class="type-option" data-type="health">🌿 Health</button>
+        <button type="button" class="type-option" data-type="mind">🧠 Mind</button>
+        <button type="button" class="type-option" data-type="relationships">🤝 Relationships</button>
+        <button type="button" class="type-option" data-type="work">💼 Work</button>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Description <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+      <textarea class="form-textarea" id="goalDescription" placeholder="Any extra detail..."></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" onclick="closeAddGoal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="submitGoal()">Save Goal</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

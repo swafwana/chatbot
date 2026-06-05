@@ -41,13 +41,12 @@ class JournalEntry(Base):
 class Goal(Base):
     __tablename__ = "goals"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, default="default", index=True)  # add this
-    title = Column(String)
-    description = Column(Text)
-    goal_type = Column(String)
-    status = Column(String, default="active")
+    user_id = Column(String, default="default", index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    goal_type = Column(String, nullable=False)
+    state = Column(String, default="in_progress")
+    why = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_checkin = Column(DateTime, nullable=True)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    prompt = Column(String, nullable=True) 
+    checkin_note = Column(Text, nullable=True)

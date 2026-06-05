@@ -74,7 +74,9 @@ def page_stress(request: Request, user_id: str = "default"):
 def page_analytics(request: Request, user_id: str = "default"):
     return _page(request, "analytics.html", "analytics", user_id)
 
-
+@app.get("/goals", response_class=HTMLResponse, name="page_goals")
+def page_goals(request: Request, user_id: str = "default"):
+    return _page(request, "goals.html", "goals", user_id)
 
 # class ChatInput(BaseModel):
 #     message: str

@@ -597,6 +597,216 @@ window.newEntry = function() {
     buildHeatmap();
     buildMonthlyBars();
   }
+  function initGoals() {
+    var activeList = document.getElementById("activeGoalsList");
+    
+    if (!activeList) return;
+
+    var selectedType = null;
+
+    // type selector in modal
+    document.querySelectorAll(".type-option").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            document.querySelectorAll(".type-option").forEach(function(b) {
+                b.classList.remove("selected");
+            });
+            btn.classList.add("selected");
+            selectedType = btn.dataset.type;
+        });
+    });
+
+    window.openAddGoal = function() {
+        document.getElementById("goalTitle").value = "";
+        document.getElementById("goalWhy").value = "";
+        document.getElementById("goalDescription").value = "";
+        document.querySelectorAll(".type-option").forEach(function(b) {
+            b.classList.remove("selected");
+        });
+        selectedType = null;
+        document.getElementById("addGoalModal").classList.add("open");
+    };
+
+    window.closeAddGoal = function() {
+        document.getElementById("addGoalModal").classList.remove("open");
+    };
+
+    window.submitGoal = function() {
+        var title = document.getElementById("goalTitle").value.trim();
+        var why = document.getElementById("goalWhy").value.trim();
+        var description = document.getElementById("goalDescription").value.trim();
+
+        if (!title) { alert("Please enter a goal."); return; }
+        if (!selectedType) { alert("Please select a category."); return; }
+
+        apiJson("/api/goals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: uid,
+                title: title,
+                why: why || null,
+                description: description || null,
+                goal_type: selectedType
+            })
+        })
+        .then(function() {
+            window.closeAddGoal();
+            loadGoals();
+        })
+        .catch(function(err) {
+            alert("Could not save goal: " + err.message);
+        });
+    };
+
+    window.deleteGoal = function(goalId) {
+        if (!confirm("Are you sure you want to delete this goal?")) return;
+        apiJson("/api/goals/" + goalId, { method: "DELETE" })
+            .then(function() { loadGoals(); })
+            .catch(function(err) { alert("Could not delete: " + err.message); });
+    };
+    window.updateGoalState = function(goalId, state) {
+    if (!state) return;
+    apiJson("/api/goals/" + goalId + "/state", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state: state })
+    })
+    .then(function() {
+        loadGoals();
+    })
+    .catch(function(err) {
+        alert("Could not update state: " + err.message);
+    });
+    };
+
+    window.checkinGoal = function(goalId) {
+        // redirect to chat with check-in context
+        window.location.href = "/chat?user_id=" + encodeURIComponent(uid) + "&checkin_goal=" + goalId;
+    };
+
+    window.toggleCompleted = function() {
+        var list = document.getElementById("completedGoalsList");
+        var arrow = document.getElementById("completedArrow");
+        var isOpen = list.style.display !== "none";
+        list.style.display = isOpen ? "none" : "flex";
+        list.style.flexDirection = "column";
+        list.style.gap = "12px";
+        arrow.classList.toggle("open", !isOpen);
+    };
+
+    function getStateLabel(state) {
+        var map = {
+            in_progress: "In Progress",
+            struggling:  "Struggling",
+            paused:      "Paused",
+            completed:   "Completed"
+        };
+        return map[state] || state;
+    }
+
+    function getCheckinText(last_checkin) {
+        if (!last_checkin) return "No check-in yet";
+        var d = new Date(last_checkin);
+        var now = new Date();
+        var diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) return "Checked in today";
+        if (diffDays === 1) return "Checked in yesterday";
+        return "Checked in " + diffDays + " days ago";
+    }
+
+    function updateLimitBar(activeCount) {
+        var dots = document.querySelectorAll(".goal-limit-dot");
+        dots.forEach(function(dot, i) {
+            dot.classList.toggle("filled", i < activeCount);
+        });
+        var text = document.getElementById("goalLimitText");
+        if (text) text.textContent = activeCount + " of 5 active goals";
+        var sub = document.getElementById("goalCountSub");
+        if (sub) sub.textContent = "Your personal goals · " + activeCount + " of 5 active";
+    }
+
+    function buildActiveCard(goal) {
+    var card = document.createElement("div");
+    card.className = "goal-card";
+    card.innerHTML =
+        '<div class="goal-card-left">' +
+            '<div class="goal-card-top">' +
+                '<div class="goal-title">' + escapeHtml(goal.title) + '</div>' +
+                '<span class="goal-type-badge badge-' + goal.goal_type + '">' + escapeHtml(goal.goal_type) + '</span>' +
+            '</div>' +
+            (goal.why ? '<div class="goal-why">"' + escapeHtml(goal.why) + '"</div>' : '') +
+            '<div class="goal-meta">' +
+                '<div class="goal-state state-' + goal.state + '">' +
+                    '<div class="state-dot dot-' + goal.state + '"></div>' +
+                    getStateLabel(goal.state) +
+                '</div>' +
+                '<div>' + getCheckinText(goal.last_checkin) + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="goal-card-actions">' +
+            '<select class="goal-action-btn" onchange="updateGoalState(' + goal.id + ', this.value)">' +
+                '<option value="">Change state</option>' +
+                '<option value="in_progress"' + (goal.state === 'in_progress' ? ' selected' : '') + '>In Progress</option>' +
+                '<option value="struggling"'  + (goal.state === 'struggling'  ? ' selected' : '') + '>Struggling</option>' +
+                '<option value="paused"'      + (goal.state === 'paused'      ? ' selected' : '') + '>Paused</option>' +
+                '<option value="completed"'   + (goal.state === 'completed'   ? ' selected' : '') + '>Completed</option>' +
+            '</select>' +
+            '<button type="button" class="goal-action-btn" onclick="checkinGoal(' + goal.id + ')">Check In</button>' +
+            '<button type="button" class="goal-action-btn danger" onclick="deleteGoal(' + goal.id + ')">Delete</button>' +
+        '</div>';
+    return card;
+}
+    function buildCompletedCard(goal) {
+        var card = document.createElement("div");
+        card.className = "completed-card";
+        card.innerHTML =
+            '<div class="completed-card-top">' +
+                '<span style="color:var(--lavender)">✅</span>' +
+                '<div class="completed-title">' + escapeHtml(goal.title) + '</div>' +
+                '<span class="goal-type-badge badge-' + goal.goal_type + '">' + escapeHtml(goal.goal_type) + '</span>' +
+            '</div>' +
+            (goal.checkin_note ? '<div class="completed-note">"' + escapeHtml(goal.checkin_note) + '"</div>' : '');
+        return card;
+    }
+
+    function loadGoals() {
+        apiJson("/api/goals/" + encodeURIComponent(uid))
+            .then(function(goals) {
+                var active = goals.filter(function(g) { return g.state !== "completed"; });
+                var completed = goals.filter(function(g) { return g.state === "completed"; });
+
+                activeList.innerHTML = "";
+                if (active.length === 0) {
+                    activeList.innerHTML =
+                        '<div class="empty-state">' +
+                        '<div class="empty-state-icon">🌱</div>' +
+                        '<h3>No active goals yet</h3>' +
+                        '<p>Set an intention and Serenity will check in with you along the way.</p>' +
+                        '<button type="button" class="btn btn-primary" onclick="openAddGoal()">+ Add Your First Goal</button>' +
+                        '</div>';
+                } else {
+                    active.forEach(function(goal) {
+                        activeList.appendChild(buildActiveCard(goal));
+                    });
+                }
+
+                var completedList = document.getElementById("completedGoalsList");
+                var completedCount = document.getElementById("completedCount");
+                completedList.innerHTML = "";
+                completed.forEach(function(goal) {
+                    completedList.appendChild(buildCompletedCard(goal));
+                });
+                if (completedCount) completedCount.textContent = "(" + completed.length + ")";
+
+                updateLimitBar(active.length);
+            })
+            .catch(function() {
+                activeList.innerHTML = '<div class="empty-state"><p>Could not load goals.</p></div>';
+            });
+    }
+
+    loadGoals();
+}
 
   function boot() {
     uid = resolveUserId();
@@ -610,6 +820,7 @@ window.newEntry = function() {
     initRefreshBreathing();
     initStressToggle();
     initAnalytics();
+    initGoals(); 
 }
 
   if (document.readyState === "loading") {
