@@ -19,6 +19,7 @@ class ChatInput(BaseModel):
     message: str = Field(min_length=1)
     include_context: bool = False  # your addition ✅
     session_id: Optional[str] = None  
+    checkin_goal_id: Optional[int] = None
 
 class ChatOutput(BaseModel):
     response: str
@@ -50,6 +51,7 @@ class GoalUpdate(BaseModel):
     why: Optional[str] = None
     status: Optional[GoalStatus] = None
     closing_note: Optional[str] = None
+    
 
 class GoalCheckinCreate(BaseModel):
     note: str = Field(min_length=1)

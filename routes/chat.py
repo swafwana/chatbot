@@ -36,8 +36,7 @@ def chat(data: ChatInput, db: Session = Depends(get_db)):
         return ChatOutput(response=SAFE_RESPONSE, crisis=True)
 
     # 4. build context
-    context = build_user_context(db, data.user_id, user_message=data.message)
-   
+    context = build_user_context(db, data.user_id, data.message, data.checkin_goal_id)   
     # 5. generate reply
     reply = generate_chat_reply(data.message, context, history)
 

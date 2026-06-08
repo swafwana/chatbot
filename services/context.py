@@ -8,9 +8,25 @@ JOURNAL_KEYWORDS = ["journal", "wrote", "entry", "remember", "last time", "recen
 
 
 
-def build_user_context(db: Session, user_id: str, user_message: str = "") -> str:
+def build_user_context(db: Session, user_id: str, user_message: str = "",checkin_goal_id: int = None) -> str:
     message_lower = user_message.lower()
     sections = []
+    if checkin_goal_id:
+        goal = db.query(models.Goal).filter(models.Goal.id == checkin_goal_id).first()
+        if goal:
+            checkins = db.query(models.GoalCheckin).filter(
+                models.GoalCheckin.goal_id == checkin_goal_id
+            ).order_by(models.GoalCheckin.created_at.asc()).all()
+            
+            checkin_history = "\n".join([f"- {c.note}" for c in checkins]) or "No previous check-ins yet."
+            
+            return (
+                f"The user is checking in on this specific goal: {goal.title}\n"
+                f"Why they set it: {goal.why or 'not specified'}\n"
+                f"Previous check-ins:\n{checkin_history}\n\n"
+                f"Focus only on this goal. Do not mention other goals."
+            )
+   
 
     if any(word in message_lower for word in MOOD_KEYWORDS):
         latest_mood = (

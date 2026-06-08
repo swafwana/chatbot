@@ -157,6 +157,12 @@
           <h3>Serenity</h3>
           <div class="bot-status"><span class="status-dot"></span> Here with you</div>
         </div>
+        <div id="goalCheckinBanner" style="display:none; padding:12px 28px; background:var(--sage-pale); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-size:13px; color:var(--ink-mid);">
+          Checking in on goal: <strong id="goalCheckinTitle"></strong>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="saveCheckin()">Save check-in</button>
+      </div>
       </div>
 
       <div class="chat-messages" id="chatMessages">

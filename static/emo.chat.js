@@ -6,6 +6,8 @@
 
     const checkinGoalId = params.get("checkin_goal");
     const checkinTitle = params.get("checkin_title");
+    console.log("Goal ID:", checkinGoalId);
+    console.log("Goal Title:", checkinTitle);
     var uid = window.EMO.uid;
     var apiJson = window.EMO.apiJson;
     var escapeHtml = window.EMO.escapeHtml;
@@ -16,6 +18,16 @@
     if (!messagesEl || !input) return;
 
     var currentSessionId = null;
+    var checkinMessage = params.get("checkin_message");
+
+    if (checkinGoalId && checkinTitle) {
+    var banner = document.getElementById("goalCheckinBanner");
+    var titleEl = document.getElementById("goalCheckinTitle");
+    if (banner && titleEl) {
+        banner.style.display = "flex";
+        titleEl.textContent = checkinTitle;
+    }
+    }
 
     function appendUser(text) {
       var wrap = document.createElement("div");
@@ -58,7 +70,7 @@
       apiJson("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, message: text, session_id: currentSessionId })
+        body: JSON.stringify({ user_id: uid, message: text, session_id: currentSessionId, checkin_goal_id: checkinGoalId ? parseInt(checkinGoalId) : null })
       })
         .then(function (data) {
           hideTyping();
@@ -95,6 +107,20 @@
     window.sendSuggestion = function (chip) {
       input.value = chip.textContent.trim();
       window.sendMessage();
+    };
+    window.saveCheckin = function() {
+    if (!checkinGoalId || !currentSessionId) return;
+    apiJson("/api/goals/" + checkinGoalId + "/checkins/summarize?session_id=" + encodeURIComponent(currentSessionId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(function(data) {
+        appendBot("I've saved a note from today's reflection on your goal. <br><br><em>" + escapeHtml(data.note) + "</em><br><br><a href='/goals?user_id=" + encodeURIComponent(uid) + "' class='btn btn-primary'>Back to Goals</a>", false);
+        document.getElementById("goalCheckinBanner").style.display = "none";
+    })
+    .catch(function(err) {
+        appendBot("Could not save check-in: " + escapeHtml(err.message), false);
+    });
     };
 
     function loadHistory(sessionId) {
@@ -147,21 +173,45 @@
         messagesEl.innerHTML = "";
         loadSidebar();
         var welcome = document.createElement("div");
-        welcome.className = "msg bot";
-        welcome.innerHTML = '<div class="msg-avatar">🌿</div><div><div class="msg-bubble">Hello — I\'m glad you\'re here. How are you feeling right now?<div class="mood-selector-msg"><div class="mood-option" onclick="selectChatMood(\'peaceful\')"><span>😌</span>Peaceful</div><div class="mood-option" onclick="selectChatMood(\'anxious\')"><span>😰</span>Anxious</div><div class="mood-option" onclick="selectChatMood(\'sad\')"><span>😢</span>Sad</div><div class="mood-option" onclick="selectChatMood(\'confused\')"><span>😕</span>Confused</div><div class="mood-option" onclick="selectChatMood(\'other\')"><span>💬</span>Other</div></div></div></div>';
-        messagesEl.appendChild(welcome);
+welcome.className = "msg bot";
+
+var checkinMessage = params.get("checkin_message");
+
+if (checkinGoalId) {
+  welcome.innerHTML =
+    '<div class="msg-avatar">🌿</div>' +
+    '<div><div class="msg-bubble">' +
+    (checkinMessage && checkinMessage.includes("first time")
+      ? 'You\'ve set a goal to <strong>' + escapeHtml(checkinTitle) + '</strong> — that\'s a great intention. How has it been going so far?'
+      : 'Welcome back. How have things been going with <strong>' + escapeHtml(checkinTitle) + '</strong> since your last check-in?'
+    ) +
+    '</div></div>';
+
+} else {
+  welcome.innerHTML =
+    '<div class="msg-avatar">🌿</div><div><div class="msg-bubble">Hello — I\'m glad you\'re here. How are you feeling right now?<div class="mood-selector-msg"><div class="mood-option" onclick="selectChatMood(\'peaceful\')"><span>😌</span>Peaceful</div><div class="mood-option" onclick="selectChatMood(\'anxious\')"><span>😰</span>Anxious</div><div class="mood-option" onclick="selectChatMood(\'sad\')"><span>😢</span>Sad</div><div class="mood-option" onclick="selectChatMood(\'confused\')"><span>😕</span>Confused</div><div class="mood-option" onclick="selectChatMood(\'other\')"><span>💬</span>Other</div></div></div></div>';
+}
+
+    messagesEl.appendChild(welcome);
       });
     };
 
+
     apiJson("/api/chat/sessions?user_id=" + encodeURIComponent(uid))
-      .then(function (sessions) {
-        loadSidebar();
-        if (sessions.length) {
-          currentSessionId = sessions[0].session_id;
-          loadHistory(currentSessionId);
-        } else {
-          window.newChat();
-        }
-      });
+    .then(function (sessions) {
+    loadSidebar();
+
+    if (checkinGoalId) {
+      window.newChat();
+      return;
+    }
+
+    if (sessions.length) {
+      currentSessionId = sessions[0].session_id;
+      loadHistory(currentSessionId);
+    } else {
+      window.newChat();
+    }
+  });
   };
 })();

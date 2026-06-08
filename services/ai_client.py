@@ -73,3 +73,27 @@ def generate_chat_reply(user_message: str, context: str,  history: list) -> str:
         return _fallback_reply(prompt)
 
     return _fallback_reply(prompt)
+def generate_checkin_summary(goal_title: str, conversation: str) -> str:
+    provider = os.getenv("MODEL_PROVIDER", "groq").lower()
+    model_name = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
+    
+    prompt = f"""The user is working on a personal goal: "{goal_title}"
+
+Here is their check-in conversation with Serenity:
+
+{conversation}
+
+Write a 1-2 sentence summary of this check-in from the user's perspective. 
+Focus on how they are feeling about the goal and any progress or struggles they mentioned.
+Write it as a journal-style note, not a report."""
+
+    if provider == "groq" and os.getenv("GROQ_API_KEY"):
+        from groq import Groq
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        result = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return result.choices[0].message.content
+    
+    return "Reflected on progress toward this goal."

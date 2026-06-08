@@ -2,6 +2,7 @@
   "use strict";
 
   window.initGoals = function () {
+    console.log("initGoals running");
     var activeList = document.getElementById("activeGoalsList");
     if (!activeList) return;
 
@@ -40,10 +41,16 @@
     };
 
     // ── Modal: Check-in ──
-    window.openCheckin = function (goalId, goalTitle) {
-    window.location.href = "/chat?user_id=" + encodeURIComponent(uid) +
+    window.openCheckin = function(goalId, goalTitle, checkinCount) {
+  var message = checkinCount === 0
+    ? "I am checking in on my goal for the first time: " + goalTitle
+    : "I want to check in on my goal: " + goalTitle;
+
+    window.location.href =
+    "/chat?user_id=" + encodeURIComponent(uid) +
     "&checkin_goal=" + goalId +
-    "&checkin_title=" + encodeURIComponent(goalTitle);
+    "&checkin_title=" + encodeURIComponent(goalTitle) +
+    "&checkin_message=" + encodeURIComponent(message);
     };
     window.closeCheckin = function () {
       document.getElementById("checkinModal").classList.remove("open");
@@ -165,9 +172,9 @@
         (goal.why ? '<div class="goal-why">"' + escapeHtml(goal.why) + '"</div>' : '') +
         buildCheckinThread(goal.checkins) +
         '<div class="goal-actions">' +
-          '<button type="button" class="goal-action-btn" onclick="openCheckin(' + goal.id + ', ' + JSON.stringify(goal.title) + ')">+ Check in</button>'+
-          (goal.status === "active"
-            ? '<button type="button" class="goal-action-btn" onclick="pauseGoal(' + goal.id + ')">Pause</button>'
+        '<button type="button" class="goal-action-btn checkin-btn" data-id="' + goal.id + '" data-title="' + escapeHtml(goal.title) + '" data-count="' + (goal.checkins ? goal.checkins.length : 0) + '">+ Check in</button>'
+             + (goal.status === "active"? 
+            '<button type="button" class="goal-action-btn" onclick="pauseGoal(' + goal.id + ')">Pause</button>'
             : '<button type="button" class="goal-action-btn" onclick="reactivateGoal(' + goal.id + ')">Reactivate</button>'
           ) +
           '<button type="button" class="goal-action-btn" onclick="openResolve(' + goal.id + ')">Resolve</button>' +
@@ -197,39 +204,46 @@
     }
 
     // ── Load ──
-    function loadGoals() {
-      apiJson("/api/goals/" + encodeURIComponent(uid))
-        .then(function (goals) {
-          var active = goals.filter(function (g) { return g.status !== "resolved"; });
-          var resolved = goals.filter(function (g) { return g.status === "resolved"; });
+function loadGoals() {
+  activeList.innerHTML = "";
+  apiJson("/api/goals/" + encodeURIComponent(uid))
+    .then(function (goals) {
+      var active = goals.filter(function (g) { return g.status !== "resolved"; });
+      var resolved = goals.filter(function (g) { return g.status === "resolved"; });
 
-          activeList.innerHTML = "";
-          if (active.length === 0) {
-            activeList.innerHTML =
-              '<div class="empty-state">' +
-              '<div class="empty-state-icon">🌱</div>' +
-              '<h3>No active goals yet</h3>' +
-              '<p>Set an intention and Serenity will check in with you along the way.</p>' +
-              '<button type="button" class="btn btn-primary" onclick="openAddGoal()">+ Add Your First Goal</button>' +
-              '</div>';
-          } else {
-            active.forEach(function (goal) {
-              activeList.appendChild(buildActiveCard(goal));
-            });
-          }
-
-          var resolvedList = document.getElementById("resolvedGoalsList");
-          var resolvedCount = document.getElementById("resolvedCount");
-          resolvedList.innerHTML = "";
-          resolved.forEach(function (goal) {
-            resolvedList.appendChild(buildResolvedCard(goal));
-          });
-          if (resolvedCount) resolvedCount.textContent = "(" + resolved.length + ")";
-        })
-        .catch(function () {
-          activeList.innerHTML = '<div class="empty-state"><p>Could not load goals.</p></div>';
+      activeList.innerHTML = "";
+      if (active.length === 0) {
+        activeList.innerHTML =
+          '<div class="empty-state">' +
+          '<div class="empty-state-icon">🌱</div>' +
+          '<h3>No active goals yet</h3>' +
+          '<p>Set an intention and Serenity will check in with you along the way.</p>' +
+          '<button type="button" class="btn btn-primary" onclick="openAddGoal()">+ Add Your First Goal</button>' +
+          '</div>';
+      } else {
+        active.forEach(function (goal) {
+          activeList.appendChild(buildActiveCard(goal));
         });
-    }
+
+        activeList.querySelectorAll(".checkin-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            openCheckin(btn.dataset.id, btn.dataset.title, parseInt(btn.dataset.count));
+          });
+        });
+      }
+
+      var resolvedList = document.getElementById("resolvedGoalsList");
+      var resolvedCount = document.getElementById("resolvedCount");
+      resolvedList.innerHTML = "";
+      resolved.forEach(function (goal) {
+        resolvedList.appendChild(buildResolvedCard(goal));
+      });
+      if (resolvedCount) resolvedCount.textContent = "(" + resolved.length + ")";
+    })
+    .catch(function () {
+      activeList.innerHTML = '<div class="empty-state"><p>Could not load goals.</p></div>';
+    });
+}
 
     loadGoals();
   };

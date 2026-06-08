@@ -6,6 +6,7 @@ from datetime import datetime
 import models
 from database import get_db
 from schemas import GoalCreate, GoalUpdate, GoalCheckinCreate
+from services.ai_client import generate_checkin_summary
 
 router = APIRouter(prefix="/api/goals", tags=["goals"])
 
@@ -97,3 +98,26 @@ def delete_goal(goal_id: int, db: Session = Depends(get_db)):
     db.delete(goal)
     db.commit()
     return {"deleted": True, "id": goal_id}
+
+
+@router.post("/{goal_id}/checkins/summarize")
+def summarize_and_save_checkin(goal_id: int, db: Session = Depends(get_db), session_id: str = None):
+    goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    
+    messages = (
+        db.query(models.Message)
+        .filter(models.Message.session_id == session_id)
+        .order_by(models.Message.timestamp.asc())
+        .all()
+    )
+    
+    conversation = "\n".join([f"{m.role}: {m.content}" for m in messages])
+    summary = generate_checkin_summary(goal.title, conversation)
+    
+    checkin = models.GoalCheckin(goal_id=goal_id, note=summary)
+    db.add(checkin)
+    db.commit()
+    db.refresh(checkin)
+    return {"id": checkin.id, "note": summary, "created_at": str(checkin.created_at)}
