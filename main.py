@@ -77,7 +77,13 @@ def page_analytics(request: Request, user_id: str = "default"):
 @app.get("/goals", response_class=HTMLResponse, name="page_goals")
 def page_goals(request: Request, user_id: str = "default"):
     return _page(request, "goals.html", "goals", user_id)
-
+@app.get("/insights", response_class=HTMLResponse)
+def page_insights(request: Request, user_id: str = "default"):
+    return templates.TemplateResponse(
+        request=request,
+        name="insights.html",
+        context={"user_id": user_id, "active_nav": "insights"}
+    )
 # class ChatInput(BaseModel):
 #     message: str
 

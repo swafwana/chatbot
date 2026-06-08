@@ -43,10 +43,14 @@ class Goal(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, default="default", index=True)
     title = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    goal_type = Column(String, nullable=False)
-    state = Column(String, default="in_progress")
     why = Column(Text, nullable=True)
+    status = Column(String, default="active")
+    closing_note = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    last_checkin = Column(DateTime, nullable=True)
-    checkin_note = Column(Text, nullable=True)
+
+class GoalCheckin(Base):
+    __tablename__ = "goal_checkins"
+    id = Column(Integer, primary_key=True, index=True)
+    goal_id = Column(Integer, nullable=False, index=True)
+    note = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)

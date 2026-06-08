@@ -5,39 +5,23 @@ from datetime import datetime
 
 import models
 from database import get_db
-from schemas import GoalCreate, GoalCheckinUpdate
+from schemas import GoalCreate, GoalUpdate, GoalCheckinCreate
 
 router = APIRouter(prefix="/api/goals", tags=["goals"])
 
 
 @router.post("")
 def create_goal(payload: GoalCreate, db: Session = Depends(get_db)):
-    active_count = (
-        db.query(models.Goal)
-        .filter(
-            models.Goal.user_id == payload.user_id,
-            models.Goal.state != "completed"
-        )
-        .count()
-    )
-    if active_count >= 5:
-        raise HTTPException(
-            status_code=400,
-            detail="You already have 5 active goals. Complete or pause one before adding a new one."
-        )
-
     goal = models.Goal(
         user_id=payload.user_id,
         title=payload.title,
-        description=payload.description,
-        goal_type=payload.goal_type,
         why=payload.why,
-        state="in_progress"
+        status="active"
     )
     db.add(goal)
     db.commit()
     db.refresh(goal)
-    return {"id": goal.id, "title": goal.title, "state": goal.state}
+    return {"id": goal.id, "title": goal.title, "status": goal.status}
 
 
 @router.get("/{user_id}")
@@ -48,46 +32,60 @@ def list_goals(user_id: str, db: Session = Depends(get_db)):
         .order_by(desc(models.Goal.created_at))
         .all()
     )
-    return [
-        {
-            "id": row.id,
-            "title": row.title,
-            "description": row.description,
-            "goal_type": row.goal_type,
-            "state": row.state,
-            "why": row.why,
-            "created_at": str(row.created_at),
-            "last_checkin": str(row.last_checkin) if row.last_checkin else None,
-            "checkin_note": row.checkin_note
-        }
-        for row in goals
-    ]
+    result = []
+    for goal in goals:
+        checkins = (
+            db.query(models.GoalCheckin)
+            .filter(models.GoalCheckin.goal_id == goal.id)
+            .order_by(models.GoalCheckin.created_at.asc())
+            .all()
+        )
+        result.append({
+            "id": goal.id,
+            "title": goal.title,
+            "why": goal.why,
+            "status": goal.status,
+            "closing_note": goal.closing_note,
+            "created_at": str(goal.created_at),
+            "checkins": [
+                {"id": c.id, "note": c.note, "created_at": str(c.created_at)}
+                for c in checkins
+            ]
+        })
+    return result
 
 
-@router.patch("/{goal_id}/checkin")
-def checkin_goal(goal_id: int, payload: GoalCheckinUpdate, db: Session = Depends(get_db)):
+@router.patch("/{goal_id}")
+def update_goal(goal_id: int, payload: GoalUpdate, db: Session = Depends(get_db)):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-
-    goal.state = payload.state
-    goal.checkin_note = payload.checkin_note
-    goal.last_checkin = datetime.utcnow()
+    if payload.title is not None:
+        goal.title = payload.title
+    if payload.why is not None:
+        goal.why = payload.why
+    if payload.status is not None:
+        goal.status = payload.status
+    if payload.closing_note is not None:
+        goal.closing_note = payload.closing_note
     db.commit()
     db.refresh(goal)
-    return {"id": goal.id, "state": goal.state, "last_checkin": str(goal.last_checkin)}
+    return {"id": goal.id, "status": goal.status}
 
 
-@router.patch("/{goal_id}/state")
-def update_state(goal_id: int, payload: GoalCheckinUpdate, db: Session = Depends(get_db)):
+@router.post("/{goal_id}/checkins")
+def add_checkin(goal_id: int, payload: GoalCheckinCreate, db: Session = Depends(get_db)):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if not goal:
-        raise HTTPException(status_call=404, detail="Goal not found")
-
-    goal.state = payload.state
+        raise HTTPException(status_code=404, detail="Goal not found")
+    checkin = models.GoalCheckin(
+        goal_id=goal_id,
+        note=payload.note
+    )
+    db.add(checkin)
     db.commit()
-    db.refresh(goal)
-    return {"id": goal.id, "state": goal.state}
+    db.refresh(checkin)
+    return {"id": checkin.id, "goal_id": goal_id, "created_at": str(checkin.created_at)}
 
 
 @router.delete("/{goal_id}")
@@ -95,7 +93,7 @@ def delete_goal(goal_id: int, db: Session = Depends(get_db)):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-
+    db.query(models.GoalCheckin).filter(models.GoalCheckin.goal_id == goal_id).delete()
     db.delete(goal)
     db.commit()
     return {"deleted": True, "id": goal_id}

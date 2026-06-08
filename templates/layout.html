@@ -16,6 +16,14 @@
 <script>
   window.__EMO_USER_ID__ = {{ user_id|tojson }};
 </script>
+<script src="{{ url_for('static', path='emo.sidebar.js') }}" defer></script>
+<script src="{{ url_for('static', path='emo.dashboard.js') }}" defer></script>
+<script src="{{ url_for('static', path='emo.chat.js') }}" defer></script>
+<script src="{{ url_for('static', path='emo.journal.js') }}" defer></script>
+<script src="{{ url_for('static', path='emo.goals.js') }}" defer></script>
+<script src="{{ url_for('static', path='emo.insights.js') }}" defer></script>
+<script src="{{ url_for('static', path='emo.refresh.js') }}" defer></script>
+<script src="{{ url_for('static', path='emo.analytics.js') }}" defer></script>
 <script src="{{ url_for('static', path='emo.js') }}" defer></script>
 {% block scripts_extra %}{% endblock %}
 </body>

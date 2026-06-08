@@ -2,9 +2,7 @@ from datetime import datetime,date
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
-GoalType = Literal["health", "mind", "relationships", "work"]
 
-GoalState = Literal["in_progress", "struggling", "paused", "completed"]
 MoodType = Literal[
     "happy",
     "calm",
@@ -40,20 +38,21 @@ class JournalCreate(BaseModel):
     tags: Optional[str] = None
     prompt: Optional[str] = None
 
-GoalType = Literal["health", "mind", "relationships", "work"]
-
-GoalState = Literal["in_progress", "struggling", "paused", "completed"]
+GoalStatus = Literal["active", "paused", "resolved"]
 
 class GoalCreate(BaseModel):
     user_id: str = Field(default="default", min_length=1)
     title: str = Field(min_length=1)
-    description: Optional[str] = None
-    goal_type: GoalType
     why: Optional[str] = None
 
-class GoalCheckinUpdate(BaseModel):
-    state: GoalState
-    checkin_note: Optional[str] = None
+class GoalUpdate(BaseModel):
+    title: Optional[str] = None
+    why: Optional[str] = None
+    status: Optional[GoalStatus] = None
+    closing_note: Optional[str] = None
+
+class GoalCheckinCreate(BaseModel):
+    note: str = Field(min_length=1)
 
 class SessionCreate(BaseModel):
     user_id: str = Field(default="default", min_length=1)

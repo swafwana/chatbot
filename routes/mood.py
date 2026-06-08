@@ -78,3 +78,24 @@ def mood_history(user_id: str, limit: int = 30, db: Session = Depends(get_db)):
         }
         for row in entries
     ]
+from services.insights import calculate_streak, calculate_most_frequent, generate_mood_pattern
+
+@router.get("/insights/{user_id}")
+def mood_insights(user_id: str, db: Session = Depends(get_db)):
+    entries = (
+        db.query(models.Mood)
+        .filter(models.Mood.user_id == user_id)
+        .order_by(desc(models.Mood.date))
+        .limit(30)
+        .all()
+    )
+
+    streak = calculate_streak(entries)
+    most_frequent = calculate_most_frequent(entries)
+    pattern = generate_mood_pattern(entries)
+
+    return {
+        "streak": streak,
+        "most_frequent": most_frequent,
+        "pattern": pattern
+    }

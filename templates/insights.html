@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block title %}EMO — Insights{% endblock %}
+{% block head_extra %}
+<style>
+  .insights-body { flex: 1; overflow-y: auto; padding: 32px; }
+  .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .insight-stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+  }
+  .insight-stat-label { font-size: 12px; color: var(--ink-soft); font-weight: 500; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 12px; }
+  .insight-stat-value { font-family: var(--serif); font-size: 52px; color: var(--ink); line-height: 1; margin-bottom: 6px; }
+  .insight-stat-sub { font-size: 13px; color: var(--ink-mid); }
+  .insight-mood-emoji { font-size: 48px; margin-bottom: 6px; }
+  .pattern-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+  }
+  .pattern-card .card-title { margin-bottom: 16px; }
+  .pattern-text { font-family: var(--serif); font-size: 18px; color: var(--ink); line-height: 1.7; }
+  .pattern-loading { font-size: 13px; color: var(--ink-soft); }
+</style>
+{% endblock %}
+{% block content %}
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Insights</div>
+      <div class="topbar-sub">Your mood patterns at a glance</div>
+    </div>
+  </div>
+
+  <div class="insights-body">
+
+    <div class="insights-grid">
+      <div class="insight-stat-card">
+        <div class="insight-stat-label">Logging Streak</div>
+        <div class="insight-stat-value" id="insightsStreak">—</div>
+        <div class="insight-stat-sub">days in a row</div>
+      </div>
+
+      <div class="insight-stat-card">
+        <div class="insight-stat-label">Most frequent this week</div>
+        <div class="insight-mood-emoji" id="insightsMoodEmoji">—</div>
+        <div class="insight-stat-sub" id="insightsMoodLabel">no moods logged yet</div>
+      </div>
+    </div>
+
+    <div class="pattern-card">
+      <div class="card-title">Your pattern</div>
+      <p class="pattern-text" id="insightsPattern">
+        <span class="pattern-loading">Analysing your moods...</span>
+      </p>
+    </div>
+
+  </div>
+{% endblock %}
