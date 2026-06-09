@@ -54,6 +54,27 @@
         })
         .catch(function () {});
     }
+    apiJson("/api/mood/latest/" + encodeURIComponent(uid))
+  .then(function(data) {
+    if (!data.mood || !data.date) return;
+
+    var last = new Date(data.date);
+    var today = new Date();
+
+    last.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    if (last.getTime() !== today.getTime()) return;
+
+    document.querySelectorAll(".mood-btn").forEach(function(btn) {
+      btn.classList.remove("selected");
+
+      if (btn.getAttribute("title") === data.mood) {
+        btn.classList.add("selected");
+      }
+    });
+  })
+  .catch(function() {});
 
     checkMoodReminder();
   };
