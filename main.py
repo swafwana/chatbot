@@ -9,6 +9,7 @@ from routes.chat import router as chat_router
 from routes.goals import router as goals_router
 from routes.journal import router as journal_router
 from routes.mood import router as mood_router
+from routes.auth import router as auth_router
 
 app = FastAPI(title="Mental Health Chatbot API", version="1.0.0")
 Base.metadata.create_all(bind=engine)
@@ -21,6 +22,9 @@ app.include_router(chat_router)
 app.include_router(mood_router)
 app.include_router(goals_router)
 app.include_router(journal_router)
+app.include_router(auth_router)
+
+
 
 
 def _page(request: Request, template: str, active_nav: str, user_id: str = "default"):
@@ -29,6 +33,14 @@ def _page(request: Request, template: str, active_nav: str, user_id: str = "defa
         name=template,
         context={"active_nav": active_nav, "user_id": user_id or "default"},
     )
+
+@app.get("/login", response_class=HTMLResponse, name="page_login")
+def page_login(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html", context={})
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/login", status_code=302)
 
 
 @app.get("/api/health")
@@ -84,10 +96,3 @@ def page_insights(request: Request, user_id: str = "default"):
         name="insights.html",
         context={"user_id": user_id, "active_nav": "insights"}
     )
-# class ChatInput(BaseModel):
-#     message: str
-
-# client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-
-# # @app.post("/chat")

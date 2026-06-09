@@ -25,10 +25,10 @@
       <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="7"/><path d="M9 5v4l2.5 2.5"/></svg></span>
       Mental Refresh
     </a>
-    <a class="nav-item{% if active_nav == 'stress' %} active{% endif %}" href="{{ url_for('page_stress') }}?user_id={{ user_id | urlencode }}">
+    <!-- <a class="nav-item{% if active_nav == 'stress' %} active{% endif %}" href="{{ url_for('page_stress') }}?user_id={{ user_id | urlencode }}">
       <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2l2 5h5l-4 3 1.5 5L9 12l-4.5 3L6 10 2 7h5z"/></svg></span>
       Stress Programs
-    </a>
+    </a> -->
     <a class="nav-item{% if active_nav == 'journal' %} active{% endif %}" href="{{ url_for('page_journal') }}?user_id={{ user_id | urlencode }}">
       <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="12" height="14" rx="2"/><path d="M6 6h6M6 9h6M6 12h4"/></svg></span>
       Journal
@@ -43,10 +43,10 @@
     Goals
   </a>
     <div class="nav-section-label">Insights</div>
-    <a class="nav-item{% if active_nav == 'analytics' %} active{% endif %}" href="{{ url_for('page_analytics') }}?user_id={{ user_id | urlencode }}">
+    <!-- <a class="nav-item{% if active_nav == 'analytics' %} active{% endif %}" href="{{ url_for('page_analytics') }}?user_id={{ user_id | urlencode }}">
       <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14l4-5 3 3 4-6 3 3"/></svg></span>
       Mood Analytics
-    </a>
+    </a> -->
     <a class="nav-item{% if active_nav == 'insights' %} active{% endif %}" href="{{ url_for('page_insights') }}?user_id={{ user_id | urlencode }}">
       <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="2"/><path d="M5 14c0-3 1.8-5 4-5s4 2 4 5"/><path d="M2 9h2M14 9h2M9 16v2"/></svg></span>
       Insights
@@ -60,5 +60,21 @@
         <div class="mood-pulse" id="sidebarMoodLine"><div class="pulse-dot"></div><span id="sidebarMoodText">Checking in…</span></div>
       </div>
     </div>
+    <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="avatar" id="sidebarAvatar">A</div>
+      <div class="user-info">
+        <p id="sidebarUserName">You</p>
+        <div class="mood-pulse" id="sidebarMoodLine"><div class="pulse-dot"></div><span id="sidebarMoodText">Checking in…</span></div>
+      </div>
+    </div>
+    <button type="button" onclick="window.EMO.logout()"
+      style="width:100%; margin-top:10px; padding:8px; border:1px solid var(--border);
+      border-radius:var(--radius-sm); background:transparent; cursor:pointer;
+      font-family:var(--sans); font-size:12px; color:var(--ink-soft);
+      transition: all 0.2s;">
+      Sign Out
+    </button>
+  </div>
   </div>
 </aside>
