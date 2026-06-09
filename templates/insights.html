@@ -24,6 +24,15 @@
   .pattern-card .card-title { margin-bottom: 16px; }
   .pattern-text { font-family: var(--serif); font-size: 18px; color: var(--ink); line-height: 1.7; }
   .pattern-loading { font-size: 13px; color: var(--ink-soft); }
+ 
+  .insights-section-title {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+
 </style>
 {% endblock %}
 {% block content %}
@@ -56,6 +65,22 @@
         <span class="pattern-loading">Analysing your moods...</span>
       </p>
     </div>
+
+    <div class="pattern-card">
+    <div class="card-title">Journal Insights</div>
+
+    <div class="insight-stat-sub">
+      Total Entries: <span id="journalEntryCount">—</span>
+    </div>
+
+    <div class="insight-stat-sub" style="margin-top: 10px;">
+      Most Common Mood: <span id="journalMostMood">—</span>
+    </div>
+
+    <p class="pattern-text" id="journalInsightsPattern" style="margin-top: 16px;">
+      <span class="pattern-loading">Analyzing your journal...</span>
+    </p>
+  </div>
 
   </div>
 {% endblock %}

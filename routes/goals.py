@@ -7,6 +7,7 @@ import models
 from database import get_db
 from schemas import GoalCreate, GoalUpdate, GoalCheckinCreate
 from services.ai_client import generate_checkin_summary
+from services.insights import generate_journal_insights
 
 router = APIRouter(prefix="/api/goals", tags=["goals"])
 
@@ -121,3 +122,4 @@ def summarize_and_save_checkin(goal_id: int, db: Session = Depends(get_db), sess
     db.commit()
     db.refresh(checkin)
     return {"id": checkin.id, "note": summary, "created_at": str(checkin.created_at)}
+
