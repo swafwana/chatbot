@@ -64,6 +64,7 @@
     if (window.initGoals) window.initGoals();
     if (window.initInsights) window.initInsights();
     if (window.initRefreshBreathing) window.initRefreshBreathing();
+    if (window.initBodyScan) window.initBodyScan();
     if (window.initAnalytics) window.initAnalytics();
   }
 

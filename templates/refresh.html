@@ -66,7 +66,7 @@
         <div><div class="refresh-card-icon">🌬️</div><h3>Box Breathing</h3><p>Calm your nervous system with rhythmic breathing</p></div>
         <div class="refresh-card-duration">⏱ 4 minutes</div>
       </div>
-      <div class="refresh-card lavender">
+      <div class="refresh-card lavender" onclick="scrollToBodyScan()">      
         <div><div class="refresh-card-icon">🧠</div><h3>Body Scan</h3><p>Release tension from head to toe, mindfully</p></div>
         <div class="refresh-card-duration">⏱ 8 minutes</div>
       </div>
@@ -104,5 +104,29 @@
       </div>
       <button type="button" class="btn btn-ghost" id="breathingBtn" onclick="startBreathing()">Start Exercise</button>
     </div>
+    <div class="breathing-widget" id="bodyScanWidget" style="margin-top: 24px;">
+    <h2>Body Scan Meditation</h2>
+    <div class="breathing-circle" id="bodyScanCircle" onclick="startBodyScan()"
+      style="background: radial-gradient(circle, var(--lavender-pale), rgba(155,142,196,0.3));
+    border-color: var(--lavender);">
+    <div style="text-align:center;">
+      <div class="breathing-text" id="bodyScanText">Tap to begin</div>
+      <div class="breathing-counter" id="bodyScanCounter" style="font-size:24px;">🧠</div>
+    </div>
+  </div>
+  <div id="bodyScanInstruction"
+    style="font-size:14px; color:var(--ink-mid); text-align:center;
+    max-width:340px; line-height:1.7; min-height:48px;">
+    A gentle scan from head to toe. Find a comfortable position.
+  </div>
+  <div class="breathing-phases">
+    <div class="phase"><div class="phase-label">Steps</div><div class="phase-duration">11</div></div>
+    <div class="phase"><div class="phase-label">Per Step</div><div class="phase-duration">15s</div></div>
+    <div class="phase"><div class="phase-label">Total</div><div class="phase-duration">~3m</div></div>
+  </div>
+  <button type="button" class="btn btn-ghost" id="bodyScanBtn" onclick="startBodyScan()">
+    Start Body Scan
+  </button>
+</div>
   </div>
 {% endblock %}
