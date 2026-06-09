@@ -4,7 +4,7 @@
 <style>
   .refresh-body { flex: 1; overflow-y: auto; padding: 32px; }
   .refresh-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 32px;
   }
   @media (max-width: 1100px) { .refresh-grid { grid-template-columns: repeat(2, 1fr); } }
   .refresh-card {
@@ -50,6 +50,9 @@
   .phase { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .phase-label { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.5px; }
   .phase-duration { font-size: 20px; font-family: var(--serif); color: var(--ink); }
+  .hidden-widget {
+    display: none;
+  }
 </style>
 {% endblock %}
 {% block content %}
@@ -62,33 +65,33 @@
 
   <div class="refresh-body">
     <div class="refresh-grid">
-      <div class="refresh-card sage" onclick="scrollToBreathing()">
+      <div class="refresh-card sage" onclick="showWidget('breathingWidget')">
         <div><div class="refresh-card-icon">🌬️</div><h3>Box Breathing</h3><p>Calm your nervous system with rhythmic breathing</p></div>
         <div class="refresh-card-duration">⏱ 4 minutes</div>
       </div>
-      <div class="refresh-card lavender" onclick="scrollToBodyScan()">      
+      <div class="refresh-card lavender" onclick="showWidget('bodyScanWidget')">      
         <div><div class="refresh-card-icon">🧠</div><h3>Body Scan</h3><p>Release tension from head to toe, mindfully</p></div>
-        <div class="refresh-card-duration">⏱ 8 minutes</div>
+        <div class="refresh-card-duration">⏱ 3 minutes</div>
       </div>
-      <div class="refresh-card sky">
+      <!-- <div class="refresh-card sky">
         <div><div class="refresh-card-icon">🎵</div><h3>Sound Bath</h3><p>Immerse yourself in calming ambient sounds</p></div>
         <div class="refresh-card-duration">⏱ 5 minutes</div>
-      </div>
-      <div class="refresh-card blush">
+      </div> -->
+      <!-- <div class="refresh-card blush">
         <div><div class="refresh-card-icon">🌸</div><h3>Visualization</h3><p>Guided imagery to your peaceful mental space</p></div>
         <div class="refresh-card-duration">⏱ 6 minutes</div>
-      </div>
-      <div class="refresh-card amber">
+      </div> -->
+      <div class="refresh-card amber" onclick="showWidget('gratitudeWidget')">
         <div><div class="refresh-card-icon">🙏</div><h3>Gratitude Reset</h3><p>Shift perspective with a quick gratitude practice</p></div>
         <div class="refresh-card-duration">⏱ 3 minutes</div>
       </div>
-      <div class="refresh-card green">
+      <div class="refresh-card green" onclick="showWidget('groundingWidget')">
         <div><div class="refresh-card-icon">✋</div><h3>Grounding 5-4-3-2-1</h3><p>Anchor yourself to the present moment</p></div>
         <div class="refresh-card-duration">⏱ 2 minutes</div>
       </div>
     </div>
 
-    <div class="breathing-widget" id="breathingWidget">
+    <div class="breathing-widget hidden-widget" id="breathingWidget">
       <h2>Box Breathing Exercise</h2>
       <div class="breathing-circle" id="breathingCircle" onclick="startBreathing()">
         <div style="text-align:center;">
@@ -104,7 +107,7 @@
       </div>
       <button type="button" class="btn btn-ghost" id="breathingBtn" onclick="startBreathing()">Start Exercise</button>
     </div>
-    <div class="breathing-widget" id="bodyScanWidget" style="margin-top: 24px;">
+  <div class="breathing-widget hidden-widget" id="bodyScanWidget" style="margin-top: 24px;">
     <h2>Body Scan Meditation</h2>
     <div class="breathing-circle" id="bodyScanCircle" onclick="startBodyScan()"
       style="background: radial-gradient(circle, var(--lavender-pale), rgba(155,142,196,0.3));
@@ -126,6 +129,71 @@
   </div>
   <button type="button" class="btn btn-ghost" id="bodyScanBtn" onclick="startBodyScan()">
     Start Body Scan
+  </button>
+</div>
+<div class="breathing-widget hidden-widget" id="gratitudeWidget" style="margin-top: 24px;">  <h2>Gratitude Reset</h2>
+  <div class="breathing-circle" id="gratitudeCircle" onclick="startGratitude()"
+    style="background: radial-gradient(circle, var(--amber-pale), rgba(212,149,106,0.2));
+    border-color: var(--amber);">
+    <div style="text-align:center;">
+      <div class="breathing-text" id="gratitudeText">Tap to begin</div>
+      <div class="breathing-counter" id="gratitudeCounter" style="font-size:24px;">🙏</div>
+    </div>
+  </div>
+  <div id="gratitudeInstruction"
+    style="font-size:14px; color:var(--ink-mid); text-align:center;
+    max-width:340px; line-height:1.7; min-height:48px;">
+    A 3-minute practice to shift your perspective. Find a quiet moment.
+  </div>
+  <div class="breathing-phases">
+    <div class="phase"><div class="phase-label">Steps</div><div class="phase-duration">8</div></div>
+    <div class="phase"><div class="phase-label">Per Step</div><div class="phase-duration">20s</div></div>
+    <div class="phase"><div class="phase-label">Total</div><div class="phase-duration">~3m</div></div>
+  </div>
+  <button type="button" class="btn btn-ghost" id="gratitudeBtn" onclick="startGratitude()">
+    Start Gratitude Reset
+  </button>
+  </div>
+  <div class="breathing-widget hidden-widget" id="groundingWidget" style="margin-top: 24px;">
+  <h2>Grounding 5-4-3-2-1</h2>
+
+  <div class="breathing-circle" id="groundingCircle"
+       onclick="startGrounding()"
+       style="background: radial-gradient(circle, var(--sage-pale), rgba(90,158,114,0.25));
+              border-color: var(--green);">
+
+    <div style="text-align:center;">
+      <div class="breathing-text" id="groundingText">Tap to begin</div>
+      <div class="breathing-counter" id="groundingCounter" style="font-size:24px;">✋</div>
+    </div>
+  </div>
+
+  <div id="groundingInstruction"
+       style="font-size:14px; color:var(--ink-mid); text-align:center;
+              max-width:340px; line-height:1.7; min-height:48px;">
+    A simple grounding exercise that reconnects you with the present moment.
+  </div>
+
+  <div class="breathing-phases">
+    <div class="phase">
+      <div class="phase-label">Steps</div>
+      <div class="phase-duration">6</div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Per Step</div>
+      <div class="phase-duration">20s</div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-label">Total</div>
+      <div class="phase-duration">~2m</div>
+    </div>
+  </div>
+
+  <button type="button" class="btn btn-ghost" id="groundingBtn"
+          onclick="startGrounding()">
+    Start Grounding
   </button>
 </div>
   </div>

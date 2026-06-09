@@ -65,6 +65,8 @@
     if (window.initInsights) window.initInsights();
     if (window.initRefreshBreathing) window.initRefreshBreathing();
     if (window.initBodyScan) window.initBodyScan();
+    if (window.initGratitudeReset) window.initGratitudeReset();
+    if (window.initGrounding) window.initGrounding();
     if (window.initAnalytics) window.initAnalytics();
   }
 
