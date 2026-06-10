@@ -133,10 +133,18 @@
             if (item.dataset.mood === mood) item.classList.add("selected");
           });
           var p = document.getElementById("journalPrompt");
-          if (p && entry.prompt) p.textContent = '"' + entry.prompt + '"';
+         if (p && entry.prompt) p.textContent = '"' + entry.prompt + '"';
+
+          var savedTags = (entry.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
+          document.querySelectorAll(".tag").forEach(function (t) {
+            t.classList.toggle("active", savedTags.includes(t.textContent.trim().toLowerCase()));
+          });
         })
         .catch(function () { alert("Could not open entry"); });
     };
+
+    
+    
 
     window.newEntry = function () {
       viewingEntry = false;
