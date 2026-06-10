@@ -11,9 +11,11 @@ from routes.journal import router as journal_router
 from routes.mood import router as mood_router
 from routes.auth import router as auth_router
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
-app.add_middleware(HTTPSRedirectMiddleware)
+
 
 app = FastAPI(title="Mental Health Chatbot API", version="1.0.0")
+
+app.add_middleware(HTTPSRedirectMiddleware)
 Base.metadata.create_all(bind=engine)
 
 
@@ -25,7 +27,6 @@ app.include_router(mood_router)
 app.include_router(goals_router)
 app.include_router(journal_router)
 app.include_router(auth_router)
-
 
 
 
