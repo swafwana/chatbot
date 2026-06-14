@@ -141,9 +141,8 @@ All subsequent requests require `Authorization: Bearer <token>` header (added au
 
 ```
 GROQ_API_KEY=...
-MODEL_PROVIDER=groq           # or "gemini"
+MODEL_PROVIDER=groq          
 MODEL_NAME=llama-3.3-70b-versatile
-GEMINI_API_KEY=...            # optional
 SECRET_KEY=your-jwt-secret
 ```
 
