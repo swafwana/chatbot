@@ -30,3 +30,44 @@ def decode_token(token: str) -> dict:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
+
+
+# ---- FastAPI dependency for protected routes -----------------------------
+# Import models/get_db here (not at module top) is unnecessary — no circular
+# import risk, since models.py and database.py don't import services.auth.
+from fastapi import Header, HTTPException, Depends
+from sqlalchemy.orm import Session
+import models
+from database import get_db
+
+
+def get_current_user(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db),
+) -> "models.User":
+    """
+    Verifies the Authorization: Bearer <token> header and returns the real,
+    logged-in User row. Raises 401 if the header is missing, the token is
+    invalid/expired, or the user it points to no longer exists.
+
+    user_id throughout this app is the user's email (see routes/auth.py),
+    so route handlers should use current_user.email as the trusted identity
+    instead of trusting a client-supplied user_id field or path param.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+
+    token = authorization.split(" ", 1)[1]
+    payload = decode_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    email = payload.get("email")
+    if not email:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    return user

@@ -1,16 +1,21 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 import models
 from database import get_db
 from schemas import JournalCreate
+from services.auth import get_current_user
 
 router = APIRouter(prefix="/api/journal", tags=["journal"])
 
 @router.post("")
-async def create_entry(payload: JournalCreate, db: Session = Depends(get_db)):
+async def create_entry(
+    payload: JournalCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     entry = models.JournalEntry(
-        user_id=payload.user_id,
+        user_id=current_user.email,  # trust the token, not payload.user_id
         title=payload.title,
         content=payload.content,
         mood_selected=payload.mood_selected,
@@ -25,7 +30,11 @@ async def create_entry(payload: JournalCreate, db: Session = Depends(get_db)):
 
 # ✅ MOVE THIS ABOVE the /{user_id} route
 @router.get("/entry/{entry_id}")
-def read_entry(entry_id: int, db: Session = Depends(get_db)):
+def read_entry(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     entry = (
         db.query(models.JournalEntry)
         .filter(models.JournalEntry.id == entry_id)
@@ -33,7 +42,12 @@ def read_entry(entry_id: int, db: Session = Depends(get_db)):
     )
 
     if not entry:
-        return {"error": "Entry not found"}
+        raise HTTPException(status_code=404, detail="Entry not found")
+
+    # This previously had no ownership check at all — any authenticated
+    # request could read any entry by guessing/incrementing the id.
+    if entry.user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to view this entry")
 
     return {
         "id": entry.id,
@@ -44,8 +58,16 @@ def read_entry(entry_id: int, db: Session = Depends(get_db)):
         "timestamp": entry.timestamp,
         "prompt": entry.prompt
     }
+
 @router.get("/insights/{user_id}")
-def journal_insights(user_id: str, db: Session = Depends(get_db)):
+def journal_insights(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to view this user's data")
+
     entries = (
         db.query(models.JournalEntry)
         .filter(models.JournalEntry.user_id == user_id)
@@ -89,9 +111,18 @@ def journal_insights(user_id: str, db: Session = Depends(get_db)):
         "top_tags": top_tags,
         "pattern": pattern,
     }
+
 # This should be LAST
 @router.get("/{user_id}")
-def list_entries(user_id: str, limit: int = 10, db: Session = Depends(get_db)):
+def list_entries(
+    user_id: str,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to view this user's data")
+
     entries = (
         db.query(models.JournalEntry)
         .filter(models.JournalEntry.user_id == user_id)

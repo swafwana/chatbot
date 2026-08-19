@@ -8,14 +8,19 @@ from database import get_db
 from schemas import GoalCreate, GoalUpdate, GoalCheckinCreate
 from services.ai_client import generate_checkin_summary
 from services.insights import generate_journal_insights
+from services.auth import get_current_user
 
 router = APIRouter(prefix="/api/goals", tags=["goals"])
 
 
 @router.post("")
-def create_goal(payload: GoalCreate, db: Session = Depends(get_db)):
+def create_goal(
+    payload: GoalCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     goal = models.Goal(
-        user_id=payload.user_id,
+        user_id=current_user.email,  # trust the token, not payload.user_id
         title=payload.title,
         why=payload.why,
         status="active"
@@ -27,7 +32,14 @@ def create_goal(payload: GoalCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{user_id}")
-def list_goals(user_id: str, db: Session = Depends(get_db)):
+def list_goals(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to view this user's data")
+
     goals = (
         db.query(models.Goal)
         .filter(models.Goal.user_id == user_id)
@@ -58,10 +70,20 @@ def list_goals(user_id: str, db: Session = Depends(get_db)):
 
 
 @router.patch("/{goal_id}")
-def update_goal(goal_id: int, payload: GoalUpdate, db: Session = Depends(get_db)):
+def update_goal(
+    goal_id: int,
+    payload: GoalUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
+    # No owner check existed before — any authenticated request could edit
+    # any goal by guessing/incrementing goal_id.
+    if goal.user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this goal")
+
     if payload.title is not None:
         goal.title = payload.title
     if payload.why is not None:
@@ -76,10 +98,18 @@ def update_goal(goal_id: int, payload: GoalUpdate, db: Session = Depends(get_db)
 
 
 @router.post("/{goal_id}/checkins")
-def add_checkin(goal_id: int, payload: GoalCheckinCreate, db: Session = Depends(get_db)):
+def add_checkin(
+    goal_id: int,
+    payload: GoalCheckinCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
+    if goal.user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this goal")
+
     checkin = models.GoalCheckin(
         goal_id=goal_id,
         note=payload.note
@@ -91,10 +121,17 @@ def add_checkin(goal_id: int, payload: GoalCheckinCreate, db: Session = Depends(
 
 
 @router.delete("/{goal_id}")
-def delete_goal(goal_id: int, db: Session = Depends(get_db)):
+def delete_goal(
+    goal_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
+    if goal.user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this goal")
+
     db.query(models.GoalCheckin).filter(models.GoalCheckin.goal_id == goal_id).delete()
     db.delete(goal)
     db.commit()
@@ -102,24 +139,33 @@ def delete_goal(goal_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{goal_id}/checkins/summarize")
-def summarize_and_save_checkin(goal_id: int, db: Session = Depends(get_db), session_id: str = None):
+def summarize_and_save_checkin(
+    goal_id: int,
+    db: Session = Depends(get_db),
+    session_id: str = None,
+    current_user: models.User = Depends(get_current_user),
+):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-    
+    if goal.user_id != current_user.email:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this goal")
+
     messages = (
         db.query(models.Message)
-        .filter(models.Message.session_id == session_id)
+        .filter(
+            models.Message.session_id == session_id,
+            models.Message.user_id == current_user.email,  # defense in depth
+        )
         .order_by(models.Message.timestamp.asc())
         .all()
     )
-    
+
     conversation = "\n".join([f"{m.role}: {m.content}" for m in messages])
     summary = generate_checkin_summary(goal.title, conversation)
-    
+
     checkin = models.GoalCheckin(goal_id=goal_id, note=summary)
     db.add(checkin)
     db.commit()
     db.refresh(checkin)
     return {"id": checkin.id, "note": summary, "created_at": str(checkin.created_at)}
-
