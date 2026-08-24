@@ -5,7 +5,7 @@
 | Layer | Technology |
 |-------|-----------|
 | Backend | FastAPI (Python) |
-| AI Model | Groq API (`llama-3.3-70b-versatile` by default, Gemini via env) |
+| AI Model | Groq API (`llama-3.3-70b-versatile` by default) |
 | Database | SQLite (`chatbot.db`) via SQLAlchemy |
 | Auth | JWT (via `python-jose`) + bcrypt password hashing |
 | Frontend | Jinja2 templates + vanilla JS modules |
