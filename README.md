@@ -1,4 +1,4 @@
-# EMO Wellness — Emotional Wellness Companion
+# EMO — Emotional Wellness Companion
 
 ## Tech Stack
 
